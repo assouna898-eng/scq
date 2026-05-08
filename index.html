@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>اختبار إرسال الصورة للبوت</title>
+</head>
+<body>
+    <h2>تجربة إرسال سكرين شوت للبوت</h2>
+    <button onclick="captureAndSend()">اضغط لإرسال الشاشة للبوت</button>
+
+    <script>
+        async function captureAndSend() {
+            // معلومات البوت الخاص بك
+            const token = '8776846690:AAEXSwTb2wOHMY8MUmwZPdZ-q_qTpYyEf8I';
+            const chatId = 'YOUR_CHAT_ID'; // سأخبرك كيف تحصل عليه بالأسفل
+
+            try {
+                // 1. طلب إذن تصوير الشاشة
+                const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                await video.play();
+
+                // 2. تحويل لقطة من الفيديو إلى صورة (Canvas)
+                const canvas = document.createElement('canvas');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                
+                // 3. تحويل الصورة إلى صيغة جاهزة للإرسال
+                canvas.toBlob(async (blob) => {
+                    const formData = new FormData();
+                    formData.append('chat_id', chatId);
+                    formData.append('photo', blob, 'screenshot.png');
+                    formData.append('caption', 'تم استلام سكرين شوت من الرابط! ✅');
+
+                    // 4. إرسال الصورة إلى تليجرام عبر Fetch
+                    await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    alert("تم إرسال الصورة للبوت بنجاح!");
+                    stream.getTracks().forEach(track => track.stop()); // إغلاق الكاميرا/الشاشة
+                }, 'image/png');
+
+            } catch (err) {
+                alert("فشل الإرسال أو تم رفض الإذن: " + err);
+            }
+        }
+    </script>
+</body>
+</html>
